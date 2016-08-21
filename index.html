@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1.0">
+	<script   src="https://code.jquery.com/jquery-2.2.4.js"></script>
+	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="//d3js.org/topojson.v1.min.js"></script>
+	
+</script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+	<!-- sideNav start -->
+	<div id="mouseInf"></div>
+	<!--  -->
+
+	<svg width="1000px" height="600px"></svg>
+	<script type="text/javascript">
+
+	</script>
+	<script type="text/javascript">
+		countyMap();
+		
+		/* 縮放、滑動 */
+		/* 
+			利用D3.js設計的Zoom Behavior，實現滑鼠滾輪滾動可地圖放大縮小效果，先宣告zoom行為，接著用call來呼叫zoom的行為。
+
+			d3.behavior.zoom(): 宣告，這裡使用了幾個參數
+			translate: 移動距離
+			scaleExtent: 縮放最大值與最小值
+			scale: 縮放大小比例
+		*/
+		var zoom = d3.behavior.zoom()
+		.translate([0, 0])
+		.scaleExtent([1, 10])
+		.scale(1)
+		.on("zoom", zoomed);
+		function zoomed() {
+			d3.select("svg").selectAll("path").attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+			d3.select("svg").selectAll("image").attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
+		}
+
+		function countyMap()
+		{
+			/* 放置你的TopoJSON路徑 */
+			d3.json("map/taiwan.json", function(error, map) {
+				if (error) return console.error(error);
+				/* 
+					center: 設定地圖中心經緯度
+					scale: 設定地圖大小
+					translate: 設定地圖在svg上的中心位置
+					on: 可以設定事件觸發，可設定參數有mousedown、mouseup、click、dblclick、mouseover、mouseout、mouseenter、mouseleave
+					call(zoom): 呼叫zoom進行放大縮小滑動
+				*/
+					projection = d3.geo.mercator().center([121,23,5]).scale(8000).translate([500,400]);
+					/* 將資料轉換成城SVG Path標籤的轉換函式 */
+					path = d3.geo.path().projection(projection);
+					/* 將資料中的特徵取出，map為JSON檔的資料，後方則是在JSON中，要取出特徵的部分 */
+					features = topojson.feature(map, map.objects.County_WGS84).features;
+					/* 利用D3c.js畫出svg */
+					d3.select("svg").selectAll("path").data(features).enter().append("path").attr({
+						d: path,
+						fill: "#9EF89E",
+						class: "area"
+					}).on({
+	            	/* 
+	            		移入時，將選取到的地區(SVG PATH tag)加入css，計算滑鼠位置，將div#mouseIn座標設定到滑鼠位置
+	            		移出時，將選取到的地區移除css，將div#mouseIn隱藏
+	            	*/
+	            		"mouseover": function(d){
+	            			d3.select(this).classed("active", true);
+	            			var x = d3.mouse(this)[0];
+	            			var y = d3.mouse(this)[1];
+	            			$('#mouseInf').css({ "top": (y) + "px", "left": (x) + "px" }).show("fast");
+	            			$('#mouseInf').text(d.properties.C_Name);
+	            		},
+	            		"mouseout":  function(){
+	            			d3.select(this).classed("active", false);
+	            			$('#mouseInf').hide();
+	            		},
+	            	})
+	            	.call(zoom);
+
+					/* 上色 */
+					/* 設定各縣市的數值 */
+					var dataObject = {'臺北市': 99,'新北市': 99,'臺南市': 99,'高雄市': 99,'臺中市': 99};
+					/* 將各縣市的數值(parameter)寫入features裡面，寫法範例，可自行更改 */
+					for(item=features.length - 1; item >= 0; item-- ) { 
+						var site = features[item].properties.C_Name;
+						var parameter = dataObject[site];
+						if(typeof parameter == 'undefined'){
+							features[item].properties.parameter = Math.floor((Math.random() * 100) + 1);
+						}else{
+							features[item].properties.parameter = parameter;
+						}	
+					}
+					/* 
+						domain: 設定數值最低最高的範圍
+						range: 設定最低最高的對應的顏色
+					*/
+					var color = d3.scale.linear().domain([1,100]).range(["#9EF89E","#FF3D3D"]);
+					/* 利用D3c.js畫出svg，顏色依照features裡的parameter參數 */
+					d3.select("svg").selectAll("path").data(features)
+					.attr({
+						d: path,
+						fill: function(d) {
+							return color(d.properties.parameter);
+						},
+						class: "area"
+					})
+
+					/* 標點 */
+					/* 第一個抓不到，往上測試範例多為csv檔，所以第一欄放欄位資訊，所以不會有誤，但如果是抓資料庫，就得注意第一行的問題 */
+					var markerObject = [
+						{},
+						{title: '臺北火車站', lat: 25.0477546, lng: 121.514861, img: 'pin (6).png'},
+						{title: '台中火車站', lat: 24.1369207, lng: 120.682955, img: 'pin (1).png'},
+						{title: '高雄火車站', lat: 22.6397664, lng: 120.2999183, img: 'pin (3).png'}
+					];
+					setMarker(markerObject);
+				});
+				
+		}
+		function setMarker(data)
+		{
+			/* 
+				採用image方式，也可以選擇circle方式
+				pinWidth: 我自己設定的圖片寬度，方便調整
+				href: 設定圖片位置
+				projection: 利用projection來將經緯度轉換成svg上位置
+				on: 設定點擊後的事件
+			*/
+			var pinWidth = 30;
+			var g = d3.select("svg").append("g");
+			d3.select("svg").selectAll("g").data(data).enter().append("image")
+			.attr({
+				href: function(d) {
+					return 'img/'+d.img
+				},
+				x: function(d) {
+					return projection([d.lng, d.lat])[0]-(pinWidth/2);
+				},
+				y: function(d) {
+					return projection([d.lng, d.lat])[1]-pinWidth
+				},
+				height: pinWidth,
+				width: pinWidth,
+				class: function(d) {
+					return d.title
+				}
+			})
+			.on({
+				"click": function(d){alert(d.title);}
+			});
+		}
+		
+	</script>
+
+</body>
+</html>
+
+

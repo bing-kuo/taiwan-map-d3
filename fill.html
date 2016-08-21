@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1.0">
+	<script   src="https://code.jquery.com/jquery-2.2.4.js"></script>
+	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="//d3js.org/topojson.v1.min.js"></script>
+	
+</script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+	<!-- sideNav start -->
+	<div id="mouseInf"></div>
+	<!--  -->
+
+	<svg width="1000px" height="600px"></svg>
+	<script type="text/javascript">
+
+	</script>
+	<script type="text/javascript">
+		countyMap();
+		
+		function countyMap()
+		{
+			/* 放置你的TopoJSON路徑 */
+			d3.json("map/taiwan.json", function(error, map) {
+				if (error) return console.error(error);
+				/* 
+					center: 設定地圖中心經緯度
+					scale: 設定地圖大小
+					translate: 設定地圖在svg上的中心位置
+				*/
+				projection = d3.geo.mercator().center([121,23,5]).scale(8000).translate([500,400]);
+				/* 將資料轉換成城SVG Path標籤的轉換函式 */
+				path = d3.geo.path().projection(projection);
+				/* 將資料中的特徵取出，map為JSON檔的資料，後方則是在JSON中，要取出特徵的部分 */
+				features = topojson.feature(map, map.objects.County_WGS84).features;
+				/* 利用D3c.js畫出svg */
+				d3.select("svg").selectAll("path").data(features).enter().append("path").attr({
+	                d: path,
+	                fill: "#9EF89E",
+	                class: "area"
+	            })
+
+				/* 上色 */
+				/* 設定各縣市的數值 */
+				var dataObject = {'臺北市': 99,'新北市': 54,'基隆市': 30,'屏東縣': 12,'臺中市': 59,'雲林縣': 23, '嘉義縣': 31, '嘉義市': 63};
+				/* 將各縣市的數值(parameter)寫入features裡面 */
+	            for(item=features.length - 1; item >= 0; item-- ) { 
+	                var site = features[item].properties.C_Name;
+	                var parameter = dataObject[site];
+	                features[item].properties.parameter = parameter;
+	            }
+				/* 
+					domain: 設定數值最低最高的範圍
+					range: 設定最低最高的對應的顏色
+				*/
+	            var color = d3.scale.linear().domain([1,100]).range(["#9EF89E","#FF3D3D"]);
+	            /* 利用D3c.js畫出svg，顏色依照features裡的parameter參數 */
+	            d3.select("svg").selectAll("path").data(features)
+	            .attr({
+	                d: path,
+	                fill: function(d) {
+	                	return color(d.properties.parameter);
+	                },
+	                class: "area"
+	            })
+			});
+		}
+		
+		
+	</script>
+
+</body>
+</html>
+
+

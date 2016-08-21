@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1.0">
+	<script   src="https://code.jquery.com/jquery-2.2.4.js"></script>
+	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="//d3js.org/topojson.v1.min.js"></script>
+	
+</script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+	<!-- sideNav start -->
+	<div id="mouseInf"></div>
+	<!--  -->
+
+	<svg width="1000px" height="600px"></svg>
+	<script type="text/javascript">
+
+	</script>
+	<script type="text/javascript">
+		countyMap();
+		
+		function countyMap()
+		{
+			/* 放置你的TopoJSON路徑 */
+			d3.json("map/taiwan.json", function(error, map) {
+				if (error) return console.error(error);
+				/* 
+					center: 設定地圖中心經緯度
+					scale: 設定地圖大小
+					translate: 設定地圖在svg上的中心位置
+				*/
+				projection = d3.geo.mercator().center([121,23,5]).scale(8000).translate([500,400]);
+				/* 將資料轉換成城SVG Path標籤的轉換函式 */
+				path = d3.geo.path().projection(projection);
+				/* 將資料中的特徵取出，map為JSON檔的資料，後方則是在JSON中，要取出特徵的部分 */
+				features = topojson.feature(map, map.objects.County_WGS84).features;
+				/* 利用D3c.js畫出svg */
+				d3.select("svg").selectAll("path").data(features).enter().append("path").attr({
+	                d: path,
+	                fill: "#9EF89E",
+	                class: "area"
+	            })
+			});
+		}
+
+	</script>
+</body>
+</html>
+
+

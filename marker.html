@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+
+<head>
+	<title></title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="initial-scale=1.0">
+	<script   src="https://code.jquery.com/jquery-2.2.4.js"></script>
+	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="//d3js.org/topojson.v1.min.js"></script>
+	
+</script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+	<!-- sideNav start -->
+	<div id="mouseInf"></div>
+	<!--  -->
+
+	<svg width="1000px" height="600px"></svg>
+	<script type="text/javascript">
+
+	</script>
+	<script type="text/javascript">
+		countyMap();
+		
+		function countyMap()
+		{
+			/* 放置你的TopoJSON路徑 */
+			d3.json("map/taiwan.json", function(error, map) {
+				if (error) return console.error(error);
+				/* 
+					center: 設定地圖中心經緯度
+					scale: 設定地圖大小
+					translate: 設定地圖在svg上的中心位置
+					on: 可以設定事件觸發，可設定參數有mousedown、mouseup、click、dblclick、mouseover、mouseout、mouseenter、mouseleave
+					*/
+					projection = d3.geo.mercator().center([121,23,5]).scale(8000).translate([500,400]);
+					/* 將資料轉換成城SVG Path標籤的轉換函式 */
+					path = d3.geo.path().projection(projection);
+					/* 將資料中的特徵取出，map為JSON檔的資料，後方則是在JSON中，要取出特徵的部分 */
+					features = topojson.feature(map, map.objects.County_WGS84).features;
+					/* 利用D3c.js畫出svg */
+					d3.select("svg").selectAll("path").data(features).enter().append("path").attr({
+						d: path,
+						fill: "#9EF89E",
+						class: "area"
+					})
+					
+					/* 標點 */
+					/* 第一個抓不到，往上測試範例多為csv檔，所以第一欄放欄位資訊，所以不會有誤，但如果是抓資料庫，就得注意第一行的問題 */
+					var markerObject = [
+						{},
+						{title: '臺北火車站', lat: 25.0477546, lng: 121.514861, img: 'pin (6).png'},
+						{title: '台中火車站', lat: 24.1369207, lng: 120.682955, img: 'pin (1).png'},
+						{title: '高雄火車站', lat: 22.6397664, lng: 120.2999183, img: 'pin (3).png'}
+					];
+					setMarker(markerObject);
+				});
+				
+		}
+		function setMarker(data)
+		{
+			/* 
+				採用image方式，也可以選擇circle方式
+				pinWidth: 我自己設定的圖片寬度，方便調整
+				href: 設定圖片位置
+				projection: 利用projection來將經緯度轉換成svg上位置
+				on: 設定點擊後的事件
+			*/
+
+			var pinWidth = 30;
+			var g = d3.select("svg").append("g");
+			d3.select("svg").selectAll("g").data(data).enter().append("image")
+			.attr({
+				href: function(d) {
+					return 'img/'+d.img
+				},
+				x: function(d) {
+					return projection([d.lng, d.lat])[0]-(pinWidth/2);
+				},
+				y: function(d) {
+					return projection([d.lng, d.lat])[1]-pinWidth
+				},
+				height: pinWidth,
+				width: pinWidth,
+				class: function(d) {
+					return d.title
+				}
+			})
+			.on({
+				"click": function(d){alert(d.title);}
+			});
+		}
+		
+	</script>
+
+</body>
+</html>
+
+
