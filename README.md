@@ -21,10 +21,6 @@ Step5.
 taiwan-map-d3/
 ├── css/
 │   └── style.css
-├── demo/
-│   ├── 
-│   ├── 
-│   └── 
 └── img/
 │   └── pin (1)~(7).png
 ├── map/
@@ -35,13 +31,19 @@ taiwan-map-d3/
 │   │   ├── County_WGS84.shp
 │   │   └── County_WGS84.shx
 │   └── taiwan.json
-└── index.html
+├── default.html
+├── fill.html
+├── index.html
+├── marker.html
+└── zoom.html
 ```
-* demo/ 將各功能拆開，存為各自的範例檔
 * map/WGS84/ 放置台灣地圖SHP原檔(WGS84格式)
 * map/taiwan.json 台灣地圖TopoJSON檔
-* index.html 為各功能的總覽
-
+* index.html 為各功能的組合
+* default.html 產生地圖
+* fill.html 讀數值上色
+* marker.html 標點
+* zoom.html 放大縮小、滑動
 
 
 
